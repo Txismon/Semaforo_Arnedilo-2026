@@ -28,15 +28,6 @@ workflows:
           chmod +x Scripts/configure_project.sh
           Scripts/configure_project.sh
 
-      - name: Buscar perfiles de firma
-        script: |
-          app-store-connect fetch-signing-files "$APP_BUNDLE_ID" \
-            --type IOS_APP_STORE \
-            --create
-          app-store-connect fetch-signing-files "$APP_BUNDLE_ID.LiveActivity" \
-            --type IOS_APP_STORE \
-            --create
-
       - name: Aplicar perfiles al proyecto
         script: |
           xcode-project use-profiles
