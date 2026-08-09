@@ -13,6 +13,8 @@
     <string>$(MARKETING_VERSION)</string>
     <key>CFBundleVersion</key>
     <string>$(CURRENT_PROJECT_VERSION)</string>
+    <key>CFBundleIconName</key>
+    <string>AppIcon</string>
     <key>UILaunchScreen</key>
     <dict/>
     <key>NSSupportsLiveActivities</key>
@@ -21,10 +23,5 @@
     <true/>
     <key>LSRequiresIPhoneOS</key>
     <true/>
-    <key>UIApplicationSceneManifest</key>
-    <dict>
-        <key>UIApplicationSupportsMultipleScenes</key>
-        <false/>
-    </dict>
 </dict>
 </plist>
