@@ -1,34 +1,12 @@
-AUDITORÍA PRE-BUILD
+AUDITORÍA FINAL 2
 
-Comprobado localmente:
-- project.yml: estructura válida.
-- App Info.plist: XML válido.
-- LiveActivity Info.plist: XML válido.
-- App: CFBundleExecutable, CFBundleName, CFBundlePackageType=APPL y CFBundleIconName.
-- LiveActivity: CFBundleExecutable, CFBundleName, CFBundlePackageType=XPC!.
-- LiveActivity: NSExtensionPointIdentifier=com.apple.widgetkit-extension.
-- Catálogo AppIcon: slots 20@2x, 20@3x, 29@2x, 29@3x, 40@2x, 40@3x,
-  60@2x (120x120), 60@3x (180x180) y 1024 marketing.
-- Todos los PNG son RGB y sin canal alfa.
-- Deployment target: iOS 17.0.
-- PrivacyInfo.xcprivacy añadido por uso de UserDefaults con razón CA92.1.
+Corrección importante:
+- XcodeGen no usa una clave target-level `resources:` como se había configurado.
+- Assets.xcassets y PrivacyInfo.xcprivacy se declaran ahora dentro de `sources`
+  con `buildPhase: resources`, que es la forma documentada por XcodeGen.
+- La auditoría comprueba el IPA real y detiene el build antes de publicar si falta:
+  ejecutable, Assets.car, AppIcon, PrivacyInfo, Info.plist válido, extensión,
+  perfiles o firmas.
 
-Limitación de esta auditoría:
-No se puede hacer una compilación Xcode real fuera de macOS. Por eso se incluye
-Scripts/preflight_ipa.sh para validar el IPA ya compilado ANTES de publicarlo.
-
-Añadir al codemagic.yaml, después de Compilar IPA y antes de artifacts:
-
-      - name: Auditoría IPA
-        script: |
-          chmod +x Scripts/preflight_ipa.sh
-          Scripts/preflight_ipa.sh
-
-Así, si el paquete generado no contiene exactamente lo esperado, el build se detendrá
-antes de intentar subirlo a Apple.
-
-
-ACTUALIZACIÓN FINAL
-- codemagic.yaml incluido y validado sintácticamente.
-- El workflow ejecuta Scripts/preflight_ipa.sh automáticamente después de compilar el IPA.
-- No es necesario editar codemagic.yaml manualmente.
+No hace falta editar ningún archivo manualmente: este ZIP incluye project.yml,
+codemagic.yaml, recursos, plists y el preflight actualizados.

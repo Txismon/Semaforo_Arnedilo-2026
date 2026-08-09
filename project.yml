@@ -25,10 +25,10 @@ targets:
     sources:
       - path: Sources/App
       - path: Sources/Shared
-
-    resources:
       - path: Resources/App/Assets.xcassets
+        buildPhase: resources
       - path: Resources/App/PrivacyInfo.xcprivacy
+        buildPhase: resources
 
     settings:
       base:

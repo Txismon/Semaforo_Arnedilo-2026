@@ -16,7 +16,12 @@ echo "=== PRE-FLIGHT IPA ==="
 echo "IPA: $IPA"
 
 require_file() {
-  [ -e "$1" ] || { echo "ERROR: falta $1"; exit 1; }
+  if [ ! -e "$1" ]; then
+    echo "ERROR: falta $1"
+    echo "=== CONTENIDO APP ==="
+    find "$APP" -maxdepth 3 -print | sort || true
+    exit 1
+  fi
 }
 
 plist_value() {
@@ -34,6 +39,7 @@ assert_plist() {
   }
 }
 
+# Structural checks
 require_file "$APP/Info.plist"
 require_file "$EXT/Info.plist"
 require_file "$APP/SemaforoArnedillo"
@@ -58,10 +64,10 @@ assert_plist "$EXT/Info.plist" "CFBundleName" "SemaforoLiveActivity"
 assert_plist "$EXT/Info.plist" "NSExtension:NSExtensionPointIdentifier" "com.apple.widgetkit-extension"
 
 echo "--- Ejecutables"
-file "$APP/SemaforoArnedillo"
-file "$EXT/SemaforoLiveActivity"
 test -x "$APP/SemaforoArnedillo"
 test -x "$EXT/SemaforoLiveActivity"
+file "$APP/SemaforoArnedillo"
+file "$EXT/SemaforoLiveActivity"
 
 echo "--- Firmas"
 codesign --verify --deep --strict --verbose=2 "$APP"
@@ -75,12 +81,18 @@ echo "--- Privacy manifest"
   "Print :NSPrivacyAccessedAPITypes:0:NSPrivacyAccessedAPITypeReasons:0" \
   "$APP/PrivacyInfo.xcprivacy"
 
-echo "--- Assets"
-xcrun --find assetutil >/dev/null
+echo "--- Asset catalog"
 xcrun assetutil --info "$APP/Assets.car" > "$WORK/assets.json"
-grep -q '"Name" : "AppIcon"' "$WORK/assets.json" || {
+if ! grep -q '"Name" : "AppIcon"' "$WORK/assets.json"; then
   echo "ERROR: AppIcon no aparece compilado en Assets.car"
   cat "$WORK/assets.json"
+  exit 1
+fi
+
+# Verify iPhone app icon declarations generated in final plist.
+echo "--- Icon declarations"
+plutil -p "$APP/Info.plist" | grep -E "CFBundleIcon(Name|Files|Icons)" || {
+  echo "ERROR: no hay metadatos de iconos en Info.plist final"
   exit 1
 }
 
