@@ -16,20 +16,20 @@ final class LiveActivityManager: ObservableObject {
             return
         }
 
+        await stop()
+
+        let start = SemaforoSyncStore.greenStartTimeMs(for: direction)
+        let attrs = SemaforoActivityAttributes(direction: direction)
+        let state = SemaforoActivityAttributes.ContentState(
+            greenStartTimeMs: start,
+            syncedAt: Date()
+        )
+        let content = ActivityContent(
+            state: state,
+            staleDate: Date().addingTimeInterval(1800)
+        )
+
         do {
-            let start = try await Base44Service.shared.greenStartTime(for: direction)
-            await stop()
-
-            let attrs = SemaforoActivityAttributes(direction: direction)
-            let state = SemaforoActivityAttributes.ContentState(
-                greenStartTimeMs: start,
-                syncedAt: Date()
-            )
-            let content = ActivityContent(
-                state: state,
-                staleDate: Date().addingTimeInterval(1800)
-            )
-
             _ = try Activity<SemaforoActivityAttributes>.request(
                 attributes: attrs,
                 content: content,
@@ -47,22 +47,18 @@ final class LiveActivityManager: ObservableObject {
             isActive = false
             return
         }
-        do {
-            let start = try await Base44Service.shared.greenStartTime(for: activity.attributes.direction)
-            let state = SemaforoActivityAttributes.ContentState(
-                greenStartTimeMs: start,
-                syncedAt: Date()
+        let start = SemaforoSyncStore.greenStartTimeMs(for: activity.attributes.direction)
+        let state = SemaforoActivityAttributes.ContentState(
+            greenStartTimeMs: start,
+            syncedAt: Date()
+        )
+        await activity.update(
+            ActivityContent(
+                state: state,
+                staleDate: Date().addingTimeInterval(1800)
             )
-            await activity.update(
-                ActivityContent(
-                    state: state,
-                    staleDate: Date().addingTimeInterval(1800)
-                )
-            )
-            isActive = true
-        } catch {
-            errorMessage = error.localizedDescription
-        }
+        )
+        isActive = true
     }
 
     func stop() async {
