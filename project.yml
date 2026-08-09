@@ -29,14 +29,12 @@ targets:
     resources:
       - path: Resources/App/Assets.xcassets
 
-    info:
-      path: Resources/App/Info.plist
-
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: __APP_BUNDLE_ID__
         PRODUCT_NAME: SemaforoArnedillo
         TARGETED_DEVICE_FAMILY: "1"
+        INFOPLIST_FILE: Resources/App/Info.plist
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
 
     dependencies:
@@ -55,9 +53,6 @@ targets:
       - path: Sources/LiveActivity
       - path: Sources/Shared
 
-    info:
-      path: Resources/LiveActivity/Info.plist
-
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: __APP_BUNDLE_ID__.LiveActivity
@@ -65,3 +60,4 @@ targets:
         SKIP_INSTALL: YES
         APPLICATION_EXTENSION_API_ONLY: YES
         TARGETED_DEVICE_FAMILY: "1"
+        INFOPLIST_FILE: Resources/LiveActivity/Info.plist
