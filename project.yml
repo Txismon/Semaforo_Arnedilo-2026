@@ -1,0 +1,55 @@
+name: SemaforoArnedillo
+
+options:
+  bundleIdPrefix: __BUNDLE_PREFIX__
+  deploymentTarget:
+    iOS: "26.0"
+  xcodeVersion: "26.0"
+  createIntermediateGroups: true
+
+settings:
+  base:
+    DEVELOPMENT_TEAM: __APPLE_TEAM_ID__
+    SWIFT_VERSION: "6.0"
+    MARKETING_VERSION: "1.0"
+    CURRENT_PROJECT_VERSION: "1"
+    GENERATE_INFOPLIST_FILE: NO
+    CODE_SIGN_STYLE: Automatic
+
+targets:
+  SemaforoArnedillo:
+    type: application
+    platform: iOS
+    deploymentTarget: "26.0"
+    sources:
+      - path: Sources/App
+      - path: Sources/Shared
+    info:
+      path: Resources/App/Info.plist
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: __APP_BUNDLE_ID__
+        PRODUCT_NAME: SemaforoArnedillo
+        TARGETED_DEVICE_FAMILY: "1"
+    dependencies:
+      - target: SemaforoLiveActivity
+        embed: true
+    scheme:
+      gatherCoverageData: false
+
+  SemaforoLiveActivity:
+    type: app-extension
+    platform: iOS
+    deploymentTarget: "26.0"
+    sources:
+      - path: Sources/LiveActivity
+      - path: Sources/Shared
+    info:
+      path: Resources/LiveActivity/Info.plist
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: __APP_BUNDLE_ID__.LiveActivity
+        PRODUCT_NAME: SemaforoLiveActivity
+        SKIP_INSTALL: YES
+        APPLICATION_EXTENSION_API_ONLY: YES
+        TARGETED_DEVICE_FAMILY: "1"

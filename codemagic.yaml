@@ -1,0 +1,58 @@
+workflows:
+  ios-testflight:
+    name: Semáforo Arnedillo - TestFlight
+    max_build_duration: 60
+    instance_type: mac_mini_m2
+
+    integrations:
+      app_store_connect: codemagic
+
+    environment:
+      xcode: latest
+      ios_signing:
+        distribution_type: app_store
+        bundle_identifier: $APP_BUNDLE_ID
+      vars:
+        # Cambia estos dos valores en Codemagic > Environment variables.
+        # No guardes secretos en este archivo.
+        APP_BUNDLE_ID: "com.example.semaforoarnedillo"
+        APPLE_TEAM_ID: "CAMBIAR_TEAM_ID"
+
+    scripts:
+      - name: Instalar XcodeGen
+        script: |
+          brew install xcodegen
+
+      - name: Generar proyecto Xcode
+        script: |
+          chmod +x Scripts/configure_project.sh
+          Scripts/configure_project.sh
+
+      - name: Buscar perfiles de firma
+        script: |
+          app-store-connect fetch-signing-files "$APP_BUNDLE_ID" \
+            --type IOS_APP_STORE \
+            --create
+          app-store-connect fetch-signing-files "$APP_BUNDLE_ID.LiveActivity" \
+            --type IOS_APP_STORE \
+            --create
+
+      - name: Aplicar perfiles al proyecto
+        script: |
+          xcode-project use-profiles
+
+      - name: Compilar IPA
+        script: |
+          xcode-project build-ipa \
+            --project "$CM_BUILD_DIR/SemaforoArnedillo.xcodeproj" \
+            --scheme "SemaforoArnedillo"
+
+    artifacts:
+      - build/ios/ipa/*.ipa
+      - /tmp/xcodebuild_logs/*.log
+      - $HOME/Library/Developer/Xcode/DerivedData/**/Build/**/*.dSYM
+
+    publishing:
+      app_store_connect:
+        auth: integration
+        submit_to_testflight: false
