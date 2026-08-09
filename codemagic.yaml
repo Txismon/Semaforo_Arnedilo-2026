@@ -13,8 +13,6 @@ workflows:
         distribution_type: app_store
         bundle_identifier: $APP_BUNDLE_ID
       vars:
-        # Cambia estos dos valores en Codemagic > Environment variables.
-        # No guardes secretos en este archivo.
         APP_BUNDLE_ID: "com.txismon.semaforoarnedillo"
         APPLE_TEAM_ID: "CRJ8N72W2J"
 
@@ -37,6 +35,11 @@ workflows:
           xcode-project build-ipa \
             --project "$CM_BUILD_DIR/SemaforoArnedillo.xcodeproj" \
             --scheme "SemaforoArnedillo"
+
+      - name: Auditoría IPA
+        script: |
+          chmod +x Scripts/preflight_ipa.sh
+          Scripts/preflight_ipa.sh
 
     artifacts:
       - build/ios/ipa/*.ipa
