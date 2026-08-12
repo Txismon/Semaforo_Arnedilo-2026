@@ -5,6 +5,7 @@ struct ContentView: View {
     @StateObject private var activity = LiveActivityManager()
     @State private var direction: SemaforoActivityAttributes.Direction = .salida
     @State private var greenStartTimeMs: Double?
+    @State private var lastSyncedAt: Date?
 
     var body: some View {
         NavigationStack {
@@ -30,7 +31,7 @@ struct ContentView: View {
                         PhoneTrafficView(greenStartTimeMs: greenStartTimeMs)
                             .frame(maxWidth: .infinity, minHeight: 250)
                     } else {
-                        ProgressView("Leyendo semáforo…")
+                        ProgressView("Cargando…")
                             .frame(maxWidth: .infinity, minHeight: 250)
                     }
 
@@ -64,19 +65,31 @@ struct ContentView: View {
                     }
                     .buttonStyle(.plain)
 
-                    Button {
-                        Task { await load() }
-                    } label: {
-                        Label("Actualizar", systemImage: "arrow.clockwise")
+                    VStack(spacing: 8) {
+                        Button {
+                            sync()
+                        } label: {
+                            Label(
+                                "Sincronizar (pulsa al ponerse verde)",
+                                systemImage: "checkmark.circle"
+                            )
                             .frame(maxWidth: .infinity)
+                        }
+                        .buttonStyle(.bordered)
+
+                        if let lastSyncedAt {
+                            Text("Última sincronización: \(lastSyncedAt.formatted(date: .abbreviated, time: .standard))")
+                                .font(.footnote)
+                                .foregroundStyle(.secondary)
+                        } else {
+                            Text("Sin sincronizar todavía en este dispositivo")
+                                .font(.footnote)
+                                .foregroundStyle(.secondary)
+                        }
                     }
-                    .buttonStyle(.bordered)
 
                     Button {
-                        Task {
-                            await activity.start(direction: direction)
-                            await load()
-                        }
+                        Task { await activity.start(direction: direction) }
                     } label: {
                         Label("Mostrar en CarPlay", systemImage: "car.side")
                             .frame(maxWidth: .infinity)
@@ -101,29 +114,29 @@ struct ContentView: View {
             }
             .task {
                 activity.restore()
-                await load()
+                load()
             }
             .onChange(of: direction) { _, _ in
-                Task { await load() }
+                load()
             }
             .onChange(of: scenePhase) { _, phase in
                 if phase == .active {
-                    Task {
-                        await activity.refresh()
-                        await load()
-                    }
+                    load()
+                    Task { await activity.refresh() }
                 }
             }
         }
     }
 
-    private func load() async {
-        do {
-            greenStartTimeMs = try await Base44Service.shared.greenStartTime(for: direction)
-            activity.errorMessage = nil
-        } catch {
-            activity.errorMessage = error.localizedDescription
-        }
+    private func load() {
+        greenStartTimeMs = SemaforoSyncStore.greenStartTimeMs(for: direction)
+        lastSyncedAt = SemaforoSyncStore.lastSyncedAt(for: direction)
+    }
+
+    private func sync() {
+        SemaforoSyncStore.sync(direction: direction)
+        load()
+        Task { await activity.refresh() }
     }
 }
 

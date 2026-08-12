@@ -5,9 +5,7 @@ struct HorariosView: View {
 
     @State private var direction: SemaforoActivityAttributes.Direction
     @State private var greenStartTimeMs: Double?
-    @State private var loadedAt: Date?
-    @State private var errorMessage: String?
-    @State private var isLoading = false
+    @State private var lastSyncedAt: Date?
 
     init(initialDirection: SemaforoActivityAttributes.Direction) {
         _direction = State(initialValue: initialDirection)
@@ -20,13 +18,8 @@ struct HorariosView: View {
                 directionPicker
                 routeCard
 
-                if isLoading && greenStartTimeMs == nil {
-                    ProgressView("Calculando horarios…")
-                        .frame(maxWidth: .infinity, minHeight: 220)
-                } else if let greenStartTimeMs {
+                if let greenStartTimeMs {
                     scheduleContent(greenStartTimeMs: greenStartTimeMs)
-                } else if let errorMessage {
-                    errorCard(errorMessage)
                 }
             }
             .padding(16)
@@ -34,13 +27,13 @@ struct HorariosView: View {
         .background(Color(uiColor: .systemGroupedBackground))
         .navigationBarTitleDisplayMode(.inline)
         .task {
-            await load()
+            load()
         }
         .onChange(of: direction) { _, _ in
-            Task { await load() }
+            load()
         }
         .refreshable {
-            await load()
+            load()
         }
     }
 
@@ -162,23 +155,31 @@ struct HorariosView: View {
                     }
                 }
 
-                if let loadedAt {
-                    HStack(spacing: 9) {
-                        Image(systemName: "arrow.triangle.2.circlepath")
-                            .foregroundStyle(.green)
-
-                        Text("Sincronizado a las \(loadedAt.formatted(date: .omitted, time: .standard))")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-
-                        Spacer()
-                    }
-                    .padding(14)
-                    .background(Color(uiColor: .secondarySystemGroupedBackground))
-                    .clipShape(RoundedRectangle(cornerRadius: 16))
-                }
+                syncFooter
             }
         }
+    }
+
+    private var syncFooter: some View {
+        HStack(spacing: 9) {
+            Image(systemName: "arrow.triangle.2.circlepath")
+                .foregroundStyle(.green)
+
+            if let lastSyncedAt {
+                Text("Sincronizado a las \(lastSyncedAt.formatted(date: .omitted, time: .standard))")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            } else {
+                Text("Sin sincronizar: usa «Sincronizar» en la pantalla principal")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+
+            Spacer()
+        }
+        .padding(14)
+        .background(Color(uiColor: .secondarySystemGroupedBackground))
+        .clipShape(RoundedRectangle(cornerRadius: 16))
     }
 
     private func summaryCard(now: Date) -> some View {
@@ -219,46 +220,9 @@ struct HorariosView: View {
         .clipShape(RoundedRectangle(cornerRadius: 22))
     }
 
-    private func errorCard(_ message: String) -> some View {
-        VStack(spacing: 12) {
-            Image(systemName: "exclamationmark.triangle")
-                .font(.largeTitle)
-                .foregroundStyle(.orange)
-
-            Text("No se pudieron cargar los horarios")
-                .font(.headline)
-
-            Text(message)
-                .font(.footnote)
-                .foregroundStyle(.secondary)
-                .multilineTextAlignment(.center)
-
-            Button("Reintentar") {
-                Task { await load() }
-            }
-            .buttonStyle(.borderedProminent)
-        }
-        .frame(maxWidth: .infinity)
-        .padding(24)
-        .background(Color(uiColor: .secondarySystemGroupedBackground))
-        .clipShape(RoundedRectangle(cornerRadius: 22))
-    }
-
-    @MainActor
-    private func load() async {
-        isLoading = true
-        defer { isLoading = false }
-
-        do {
-            greenStartTimeMs = try await Base44Service.shared.greenStartTime(for: direction)
-            loadedAt = Date()
-            errorMessage = nil
-        } catch {
-            errorMessage = error.localizedDescription
-            if greenStartTimeMs == nil {
-                loadedAt = nil
-            }
-        }
+    private func load() {
+        greenStartTimeMs = SemaforoSyncStore.greenStartTimeMs(for: direction)
+        lastSyncedAt = SemaforoSyncStore.lastSyncedAt(for: direction)
     }
 }
 
