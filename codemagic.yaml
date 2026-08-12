@@ -1,4 +1,9 @@
 workflows:
+
+  # ---------------------------------------------------------------
+  # iOS: genera el IPA y lo sube a App Store Connect / TestFlight.
+  # Este workflow NO se ha modificado.
+  # ---------------------------------------------------------------
   ios-testflight:
     name: Semáforo Arnedillo - TestFlight
     max_build_duration: 60
@@ -50,3 +55,36 @@ workflows:
       app_store_connect:
         auth: integration
         submit_to_testflight: false
+
+  # ---------------------------------------------------------------
+  # Android: genera el APK instalable. Compila la carpeta /android.
+  # No toca nada del proyecto iOS.
+  # ---------------------------------------------------------------
+  android-apk:
+    name: Semáforo Arnedillo - APK Android
+    max_build_duration: 45
+    instance_type: linux_x2
+
+    environment:
+      java: 17
+
+    scripts:
+      - name: Preparar Gradle wrapper
+        script: |
+          cd android
+          if [ ! -f gradlew ]; then
+            gradle wrapper --gradle-version 8.7
+          fi
+          chmod +x gradlew
+
+      - name: Compilar APK
+        script: |
+          cd android
+          ./gradlew assembleRelease --no-daemon
+
+      - name: Localizar APK
+        script: |
+          find android/app/build/outputs -name "*.apk" -print
+
+    artifacts:
+      - android/app/build/outputs/**/*.apk
