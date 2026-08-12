@@ -63,12 +63,22 @@ workflows:
   android-apk:
     name: Semáforo Arnedillo - APK Android
     max_build_duration: 45
-    instance_type: linux_x2
+    # Se usa la instancia de macOS porque las de Linux requieren plan de
+    # pago en Codemagic. Las imágenes de macOS traen el Android SDK y
+    # Gradle preinstalados, así que el APK se compila igual.
+    instance_type: mac_mini_m2
 
     environment:
       java: 17
 
     scripts:
+      - name: Comprobar herramientas
+        script: |
+          echo "JAVA_HOME=$JAVA_HOME"
+          java -version
+          echo "ANDROID_SDK_ROOT=$ANDROID_SDK_ROOT"
+          gradle --version
+
       - name: Preparar Gradle wrapper
         script: |
           cd android
