@@ -1,0 +1,40 @@
+# BLOQUE PARA AÑADIR A TU codemagic.yaml EXISTENTE
+#
+# Tu codemagic.yaml actual empieza por:
+#
+#   workflows:
+#     ios-testflight:
+#       ...
+#
+# Pega el bloque de abajo DENTRO de "workflows:", al mismo nivel de
+# indentación que "ios-testflight:" (dos espacios). No borres el workflow
+# de iOS: los dos conviven y se lanzan por separado desde Codemagic.
+
+  android-apk:
+    name: Semáforo Arnedillo - APK Android
+    max_build_duration: 45
+    instance_type: linux_x2
+
+    environment:
+      java: 17
+
+    scripts:
+      - name: Preparar Gradle wrapper
+        script: |
+          cd android
+          if [ ! -f gradlew ]; then
+            gradle wrapper --gradle-version 8.7
+          fi
+          chmod +x gradlew
+
+      - name: Compilar APK
+        script: |
+          cd android
+          ./gradlew assembleRelease --no-daemon
+
+      - name: Localizar APK
+        script: |
+          find android/app/build/outputs -name "*.apk" -print
+
+    artifacts:
+      - android/app/build/outputs/**/*.apk
